@@ -14,7 +14,7 @@ parameters:
  
  
   -
-    name: fi11ilename
+    name: filename
     label: "System filename"
     description: "Name of the file"
     type: string
