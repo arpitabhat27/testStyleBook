@@ -1,0 +1,35 @@
+name: new2
+namespace: neustar.citrix.adc.stylebooks
+version: "3.9"
+display-name: This StyleBook defines a configuration of an app.
+private: true
+description: |    
+    This StyleBook contains the configuration elements to deploy one application (multiple virtual services).
+schema-version: "1.0"
+import-stylebooks: 
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "3.9"
+parameters:
+  - 
+    name: customer-name
+    label: Customer
+    description: Customer Name or ID that is used to differentiate a customer's config objects
+    type: string
+    required: true
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+    
+parameters-default-sources:
+  - neustar::app-template-params
+  - neustar::shared-configs-for-apps-params
+
+components:
+  -
+    name: virtualservice-comp
+    type: neustar::lbvserver-template
+    repeat: $parameters.lbvservers
+    repeat-item: lbvserver
+    properties-default-sources:
+      - $parameters
+      - $lbvserver
