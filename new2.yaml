@@ -51,6 +51,13 @@ parameters:
     description: "FQDN Domain Authentication vserver"
     type: string
     required: true
+    
+  -
+    name: auth-domain2
+    label: "FQDN of Authentication vserver"
+    description: "FQDN Domain Authentication vserver"
+    type: string
+    required: true
 
   -
     name: create-lbvserver
