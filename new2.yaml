@@ -1,35 +1,86 @@
-name: new2
-namespace: neustar.citrix.adc.stylebooks
-version: "3.9"
-display-name: This StyleBook defines a configuration of an app.
-private: true
-description: |    
-    This StyleBook contains the configuration elements to deploy one application (multiple virtual services).
+namespace: com.citrix.adc.enterprise.stylebooks
+version: "1.0"
+description: This StyleBook defines a NetScaler configuration for Authentication vserver.
+display-name: Authentication Vserver StyleBook
 schema-version: "1.0"
-import-stylebooks: 
+
+import-stylebooks:
   -
-    namespace: neustar.citrix.adc.stylebooks
-    prefix: neustar
-    version: "3.9"
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "10.5"
+  -
+    namespace: com.citrix.adc.commontypes
+    prefix: cmtypes
+    version: "1.0"
+
 parameters:
-  - 
-    name: customer-name
-    label: Customer
-    description: Customer Name or ID that is used to differentiate a customer's config objects
+  -
+    name: auth-vserver-name
+    label: "Name for authentication vserver"
+    description: "Name for authentication vserver"
+    type: string
+    key: true
+    required: true
+  -
+    name: auth-vserver-ip
+    label: "Virtual IP address of Authentication vserver"
+    description: "Virtual IP address of Authentication vserver"
+    type: ipaddress
+    required: true
+
+  -
+    name: auth-virtual-port
+    label: "Authentication Vserver Virtual Port"
+    description: "TCP port representing the Authentication Vserver"
+    type: tcp-port
+    default: 443
+    required: true
+
+  -
+    name: auth-service-type
+    label: "Authentication vserver Protocol"
+    description: "Protocol used for the Authentication vserver"
+    type: string
+    default: SSL
+    required: true
+  -
+    name: auth-domain
+    label: "FQDN of Authentication vserver"
+    description: "FQDN Domain Authentication vserver"
     type: string
     required: true
-    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
-    
-parameters-default-sources:
-  - neustar::app-template-params
-  - neustar::shared-configs-for-apps-params
+
+  -
+    name: create-lbvserver
+    label: "Create or Skip lbvserver"
+    description: "If true lbvserver will be created"
+    type: boolean
+    default: true
 
 components:
   -
-    name: virtualservice-comp
-    type: neustar::lbvserver-template
-    repeat: $parameters.lbvservers
-    repeat-item: lbvserver
-    properties-default-sources:
-      - $parameters
-      - $lbvserver
+    name: authvserver-comp
+    type: ns::authenticationvserver
+    properties:
+      name: $parameters.auth-vserver-name
+      ipv46: $parameters.auth-vserver-ip
+      port: $parameters.auth-virtual-port
+      servicetype: $parameters.auth-service-type
+      authenticationdomain: $parameters.auth-domain
+
+  -
+    name: lbvserver-comp
+    type: ns::lbvserver
+    condition: $parameters.create-lbvserver
+    properties:
+     name: lbssl
+     servicetype: SSL
+     ipv46: 44.55.33.22
+     port: 443
+     lbmethod: LEASTCONNECTION
+
+outputs:
+  -
+    name: authvserver
+    value: $components.authvserver-comp
