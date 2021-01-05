@@ -36,6 +36,7 @@ parameters:
     description: "TCP port representing the Authentication Vserver"
     type: tcp-port
     required: true
+    default: 443
 
   -
     name: auth-service-type
