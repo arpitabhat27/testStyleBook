@@ -1,0 +1,174 @@
+---
+name: bot-profile
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: "StyleBook for creating an BOT profile"
+description: "This stylebook configures an BOT config."
+schema-version: "1.0"
+private: true
+import-stylebooks:
+  -
+    namespace: neustar.citrix.adc.commontypes
+    prefix: cmtypes
+    version: "6.2"
+  -
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+parameters:
+  -
+    name: name
+    label: BOT Profile Name
+    description: |
+      Name for the profile. Must begin with a letter, number, or the underscore character (_), and must contain only letters, numbers, and the hyphen (-), period (.), pound (#), space ( ), at (@), equals (=), colon(:), and underscore (_) characters. Cannot be changed after the profile is added.
+    type: string
+    min-length: 1
+    max-length: 31
+    key: true
+    required: true
+  - 
+    name: customer-name
+    type: string
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+    required: true
+parameters-default-sources:
+  - cmtypes::bot-profile-params
+substitutions:
+  sig-name(sname): lower($parameters.customer-name) + "-" + lower($sname) + "-bot-sigs"
+  onoff-replace:
+    false: "OFF"
+    true: "ON"
+components:
+  -
+    name: bot-profile-comp
+    type: ns::botprofile
+    properties:
+      name: $parameters.name
+      signature?: if-then-else($parameters.botsignature-name, if-then-else(startswith($parameters.botsignature-name,"nsr-default"), $parameters.botsignature-name, $substitutions.sig-name($parameters.botsignature-name)), $parameters.botsignature-name)
+      errorurl?: if-then-else($parameters.error-url, $parameters.error-url, "/")
+      bot_enable_white_list?: $substitutions.onoff-replace[$parameters.allowed-list-settings.enable-allowed-list]
+      bot_enable_black_list?: $substitutions.onoff-replace[$parameters.blocked-list-settings.enable-blocked-list]
+      bot_enable_rate_limit?: $substitutions.onoff-replace[$parameters.rate-limit-settings.enable-rate-limit]
+      devicefingerprint?: $substitutions.onoff-replace[$parameters.devicefingerprint-settings.enable-devicefingerprint]
+      devicefingerprintaction?: $parameters.devicefingerprint-settings.bot-devicefingerprint-actions
+      bot_enable_ip_reputation?: $substitutions.onoff-replace[$parameters.ip-reputation-settings.enable-ip-reputation]
+      bot_enable_tps?: $substitutions.onoff-replace[$parameters.tps-settings.enable-bot-tps]
+      trap?: $substitutions.onoff-replace[$parameters.trap-url-settings.enable-bot-trap]
+      trapaction?: $parameters.trap-url-settings.bot-trap-actions
+      trapurl?: $parameters.trap-url-settings.trap-url
+      comment?: $parameters.comment
+    components:
+      -
+        name: bot-profile-allowed-list-binding-comp
+        type: ns::botprofile_whitelist_binding
+        condition: $parameters.allowed-list-settings.bot-allowed-list
+        repeat: $parameters.allowed-list-settings.bot-allowed-list
+        repeat-item: allowed-list-binding
+        properties:
+          name: $parent.properties.name
+          bot_whitelist: exists($allowed-list-binding)
+          bot_whitelist_type?: $allowed-list-binding.type
+          bot_whitelist_value?: $allowed-list-binding.value
+          log?: $substitutions.onoff-replace[$allowed-list-binding.log]
+          bot_whitelist_enabled?: $substitutions.onoff-replace[$allowed-list-binding.enable]
+          logmessage?: $allowed-list-binding.log-message
+          bot_bind_comment?: $allowed-list-binding.comment
+      -
+        name: bot-profile-blocked-list-binding-comp
+        type: ns::botprofile_blacklist_binding
+        condition: $parameters.blocked-list-settings.bot-blocked-list
+        repeat: $parameters.blocked-list-settings.bot-blocked-list
+        repeat-item: blocked-list-binding
+        properties:
+          name: $parent.properties.name
+          bot_blacklist: exists($blocked-list-binding)
+          bot_blacklist_type?: $blocked-list-binding.type
+          bot_blacklist_value?: $blocked-list-binding.value
+          bot_blacklist_action?: $blocked-list-binding.actions
+          bot_blacklist_enabled?: $substitutions.onoff-replace[$blocked-list-binding.enable]
+          logmessage?: $blocked-list-binding.log-message
+          bot_bind_comment?: $blocked-list-binding.comment
+      -
+        name: bot-profile-ipreputation-binding
+        type: ns::botprofile_ipreputation_binding
+        condition: $parameters.ip-reputation-settings.bot-ip-reputation-configs
+        repeat: $parameters.ip-reputation-settings.bot-ip-reputation-configs
+        repeat-item: ipreputation-binding
+        properties:
+          name: $parent.properties.name
+          bot_ipreputation: exists($ipreputation-binding)
+          category?: $ipreputation-binding.category
+          bot_iprep_enabled?: $substitutions.onoff-replace[$ipreputation-binding.enable]
+          bot_iprep_action?: $ipreputation-binding.actions
+          logmessage?: $ipreputation-binding.log-message
+          bot_bind_comment?: $ipreputation-binding.comment
+      -
+        name: bot-profile-ratelimit-binding
+        type: ns::botprofile_ratelimit_binding
+        condition: $parameters.rate-limit-settings.bot-rate-limit-configs
+        repeat: $parameters.rate-limit-settings.bot-rate-limit-configs
+        repeat-item: ratelimit-binding
+        properties:
+          name: $parent.properties.name
+          bot_ratelimit: exists($ratelimit-binding)
+          bot_rate_limit_type?: $ratelimit-binding.type
+          bot_rate_limit_url?: $ratelimit-binding.url
+          cookiename?: $ratelimit-binding.cookie-name
+          rate?: $ratelimit-binding.rate
+          timeslice?: $ratelimit-binding.timeslice
+          bot_rate_limit_action?: $ratelimit-binding.actions
+          bot_rate_limit_enabled?: $substitutions.onoff-replace[$ratelimit-binding.enable]
+          logmessage?: $ratelimit-binding.log-message
+          bot_bind_comment?: $ratelimit-binding.comment
+      -
+        name: bot-profile-tps-binding
+        type: ns::botprofile_tps_binding
+        condition: $parameters.tps-settings.bot-tps-configs
+        repeat: $parameters.tps-settings.bot-tps-configs
+        repeat-item: tps-binding
+        properties:
+          name: $parent.properties.name
+          bot_tps: exists($tps-binding)
+          bot_tps_type?: $tps-binding.type
+          threshold?: $tps-binding.threshold
+          percentage?: $tps-binding.percentage
+          bot_tps_action?: $tps-binding.actions
+          logmessage?: $tps-binding.log-message
+          bot_bind_comment?: $tps-binding.comment
+      -
+        name: bot-profile-captcha-binding
+        type: ns::botprofile_captcha_binding
+        condition: $parameters.captcha-mitigation-settings.captcha-mitigation-configs
+        repeat: $parameters.captcha-mitigation-settings.captcha-mitigation-configs
+        repeat-item: captcha-binding
+        properties:
+          name: $parent.properties.name
+          captcharesource: exists($captcha-binding)
+          bot_captcha_url?: $captcha-binding.captcha-url
+          waittime?: $captcha-binding.wait-time
+          graceperiod?: $captcha-binding.grace-period
+          muteperiod?: $captcha-binding.mute-period
+          requestsizelimit?: $captcha-binding.request-size-limit
+          retryattempts?: $captcha-binding.retry-attempts
+          bot_captcha_action?: $captcha-binding.actions
+          bot_captcha_enabled?: $substitutions.onoff-replace[$captcha-binding.enable]
+          logmessage?: $captcha-binding.log-message
+          bot_bind_comment?: $captcha-binding.comment
+      -
+        name: bot-profile-insertion-url-binding
+        type: ns::botprofile_trapinsertionurl_binding
+        condition: $parameters.trap-url-settings.trap-insertion-url
+        repeat: $parameters.trap-url-settings.trap-insertion-url
+        repeat-item: trapinsertionurl-binding
+        properties:
+          name: $parent.properties.name
+          bot_trap_url?: $trapinsertionurl-binding.insertion-url
+          bot_trap_url_insertion_enabled?: $substitutions.onoff-replace[$trapinsertionurl-binding.enable]
+          trapinsertionurl: exists($trapinsertionurl-binding)
+          bot_bind_comment?: $trapinsertionurl-binding.comment
+          
+outputs:
+  -
+    name: bot-profile
+    description: BOT profile component
+    value: $components.bot-profile-comp

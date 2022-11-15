@@ -1,0 +1,74 @@
+name: lbvserver-certkeys-binding
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: VServer To Certificates Binding StyleBook
+private: true
+description: |    
+    StyleBook that given a set of certificates, creates the corresponding certkeys and bind them to the given vserver.
+schema-version: "1.0"
+import-stylebooks:
+  - 
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "6.2"
+parameters:
+  - 
+    name: customer-name
+    label: Customer
+    description: Customer Name or ID that is used to differentiate a customer's config objects
+    type: string
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+    required: true
+  -
+    name: vserver-name
+    type: string
+    description: VServer to which we bind the certkeys created in this StyleBook.
+    required: true
+  -
+    name: certificate
+    type: neustar::lbvserver-certificate-params
+    description: List of CertKeys
+    required: true
+  - 
+    name: anull
+    type: boolean
+
+substitutions:
+  certkeyname(name): $parameters.customer-name + "-" + $name + "-certkey"
+  certname(name): $parameters.customer-name + "-" + $name + "-cert.pem"
+  keyname(name): $parameters.customer-name + "-" + $name + "-key.pem"
+  sninull(val): if-then-else($val == true, true, $parameters.anull)
+components:
+  # -
+  #   name: certkeys-comp
+  #   type: ns::sslcertkey
+  #   description: This list of components create certkey entities on the NetScaler device.
+  #   condition: $parameters.modify-cert
+  #   meta-properties:
+  #     action: link
+  #   properties: 
+  #     certkey: $substitutions.certkeyname($parameters.certificate.cert-name)
+  #     #cert: $substitutions.filename($certificate.certfile-name, $parameters.certificate.upload-files.cert-file.filename)
+  #     cert: $substitutions.certname($parameters.certificate.cert-name)
+  #     inform: "PEM"
+  #     linkcertkeyname: $parameters.certificate.linkcertkeyname
+  #     #key?: $substitutions.keyfile($certificate.ssl-inform, $parameters.certificate.certfile-name, $certificate.upload-files.cert-file.filename, $certificate.keyfile-name, $certificate.upload-files.key-file.filename)
+  #     key?: $substitutions.keyname($parameters.certificate.cert-name)
+  #     #fipskey?: $certificate.fipskey-name
+  #     #bundle?: "YES"
+  #     # expirymonitor?: $certificate.cert-advanced.expiry-monitor
+  #     # notificationperiod?: $certificate.cert-advanced.notification-period
+  #     passplain?: $parameters.certificate.password
+  #     nodomaincheck: true
+  - 
+    name: cert-bindings-adv-comp
+    type: ns::sslvserver_sslcertkey_binding 
+    description: "This component binds certkey entities to a vserver with advanced settings."
+    properties: 
+      vservername: $parameters.vserver-name
+      certkeyname: $parameters.certificate.cert-name
+      snicert?: $substitutions.sninull($parameters.certificate.sni-cert)

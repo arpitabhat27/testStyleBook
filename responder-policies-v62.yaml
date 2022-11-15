@@ -1,0 +1,67 @@
+name: responder-policies
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: VServer To Responder Policy Bindings StyleBook
+private: true
+description: |    
+    StyleBook that given a set of certificates, creates the corresponding responders and bind them to the given vserver.
+schema-version: "1.0"
+import-stylebooks:
+  - 
+    namespace: com.citrix.adc.stylebooks
+    prefix: stlb
+    version: "1.0"
+  - 
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "6.2"
+parameters:
+  -
+    name: customer-name
+    type: string
+    required: true
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+  -
+    name: vserver-name
+    type: string
+    required: true
+  -
+    name: policyname-list
+    type: object[]
+    parameters: 
+      -
+        name: name
+        label: Responder Policy Name
+        description: name of the responder policy
+        type: string
+        required: true
+      - 
+        name: continue
+        type: boolean
+        label: Continue?
+        description: Choose whether to continue processing after evaluation
+        required: true
+  
+substitutions:
+  responder-policyname(customername, policyname): $customername + "-" + $policyname + "-rpol"
+components:
+  -
+    name: policies-comp
+    type: object
+    repeat: $parameters.policyname-list
+    repeat-item: policy
+    properties:
+      name: $policy.name
+      type: POLICY
+      bind-point: REQUEST
+  -
+    name: responder-policies-bindings-comp
+    type: stlb::vserver-responderpolicies-bindings
+    properties:
+        vserver-name: $parameters.vserver-name
+        vserver-type: LBVSERVER
+        policies: $components.policies-comp.properties

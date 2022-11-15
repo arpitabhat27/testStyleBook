@@ -1,0 +1,352 @@
+name: lbvserver-template-params
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: Neustar App Template Params
+description: |    
+    This StyleBook contains the configuration elements to deploy for a Neustar application.
+schema-version: "1.0"
+private: true
+import-stylebooks: 
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "6.2"
+parameters:
+  - 
+    name: name
+    label: "Load Balancer Name"
+    description: "Protocol used for the Load Balanced application."
+    type: string
+    required: true
+  - 
+    name: lb-service-type
+    label: "Load Balancer Protocol"
+    description: "Protocol used for the Load Balanced application."
+    type: string
+    default: HTTP
+    required: true
+    gui:
+      updatable: false
+      summary_display: true
+    allowed-values: 
+      - HTTP
+      - SSL
+      - SSL_BRIDGE
+      - TCP
+      - UDP
+      - DNS
+      - DNS_TCP
+      - DTLS
+  - 
+    name: lb-virtual-port
+    label: "Load Balancer Port"
+    description: "TCP port representing the Load Balanced application"
+    type: tcp-port
+    gui:
+      updatable: false
+      summary_display: true
+    default: 80
+  - 
+    name: lb-advanced
+    label: "Advanced Load Balancer Settings"
+    description: "Advanced load balancer settings"
+    type: object
+    required: true
+    gui: 
+      collapse_pane: true    
+    parameters:
+      - 
+        name: algorithm
+        label: "Load Balancing Algorithm"
+        description: "Load Balancing algorithm for the application"
+        type: string
+        default: LEASTCONNECTION        
+        allowed-values: 
+          - LEASTCONNECTION
+          - ROUNDROBIN
+          - LEASTRESPONSETIME
+          - SOURCEIPHASH
+          - URLHASH
+          - DOMAINHASH
+          - DESTINATIONIPHASH
+          - SRCIPDESTIPHASH
+          - SRCIPSRCPORTHASH
+          - LEASTBANDWIDTH
+          - LEASTPACKETS
+          - LRTM
+          - LEASTREQUEST
+      - 
+        name: persistence
+        label: "Load Balancing Persistence Type"
+        description: "Persistence type used for members of this pool"
+        type: string
+        default: SOURCEIP
+        allowed-values: 
+          - NONE
+          - SOURCEIP
+          - COOKIEINSERT
+          - SRCIPDESTIP
+          - DESTIP
+      - 
+        name: timeout
+        label: "Load Balancing Persistence Timeout"
+        description: "Time period for which a persistence session is in effect."
+        type: number
+        default: 120
+      - 
+        name: client-timeout
+        label: "Load Balancing Client Timeout"
+        description: "Client connection timeout after inactivity in seconds"
+        default: 1800
+        type: number
+      - 
+        name: insert-vserver-ipport
+        label: "Insert VIP HTTP header"
+        description: "Insert an HTTP header, whose value is the IP address and port number of the virtual server, before forwarding a request to the server."
+        type: string
+        default: "OFF"
+        allowed-values: 
+          - "OFF"
+          - VIPADDR
+      - 
+        name: redirect-url
+        label: "Redirect to URL on unavailability"
+        description: "URL to which to redirect traffic if the virtual server becomes unavailable."
+        type: string 
+      - 
+        name: comment
+        label: "Comment"
+        description: "Any comments that you might want to associate with the virtual server."
+        type: string
+      # -
+      #   name: http-profile
+      #   label: "Name of HTTP Profile"
+      #   description: "Name of HTTP Profile to use for this VIP"
+      #   type: string
+      -
+        name: flush-on-state-down
+        label: "Cleanup Connections when down"
+        description: "Cleanup all connections on this VIP when it goes down"
+        type: string
+        default: ENABLED
+        allowed-values:
+            - ENABLED
+            - DISABLED
+      -
+          name: appflow-log
+          label: "Enable AppFlow"
+          type: string
+          default: ENABLED
+          allowed-values:
+              - ENABLED
+              - DISABLED
+  - 
+    name: svc-service-type
+    label: "Backend Server Protocol"
+    description: "Protocol of the application server."
+    type: string
+    default: HTTP    
+    allowed-values:
+      - HTTP
+      - SSL
+      - SSL_BRIDGE
+      - TCP
+      - UDP
+      - DNS
+      - DNS_TCP
+      - DTLS
+
+    required: true
+  -
+    name: svc-servers
+    label: "Server IPs and Ports"
+    description: "List of server IPs and Ports"
+    type: object[]
+    parameters:
+      - name: host-type
+        label: "Hostname or IP Address"
+        description: "Hostname or IP"
+        type: string
+        required: true
+        default: "ipaddress"
+        allowed-values:
+          - hostname
+          - ipaddress
+      - 
+        name:  host
+        label: "Application Server Address"
+        description: "Address of a server"
+        type: string
+        required: true
+      - 
+        name: port
+        label: "Application Server Port"
+        description: "TCP port of a server"
+        type: tcp-port
+        default: 80
+      -
+        name: monitor 
+        label: Monitor?
+        description: Whether to monitor this service
+        type: boolean
+        default: true
+      #BELOW ITEM UNUSED!!
+      - 
+        name: add-server
+        label: "Add a server resource"
+        description: "Option to add a server entity explicity and be managed by the stylebook"
+        type: boolean
+        default: true
+        gui:
+          hidden: true
+  
+  - 
+    name: svc-advanced
+    label: "Advanced Application Server Settings"
+    description: "Advanced Application Server Settings"
+    type: object
+    required: true
+    gui: 
+      collapse_pane: true
+    parameters:
+      - 
+        name: svc-client-ip-header
+        label: "Client IP Header Name"
+        description: "Name of the HTTP header whose value must be set to the IP address of the client."
+        type: string
+        default: "X-Forwarded-For"
+      - 
+        name: svc-surge-protection
+        label: "Surge Protection"
+        description: "Enable surge protection for the service group."
+        type: string
+        default: "ON"
+        allowed-values: 
+          - "OFF"
+          - "ON"
+      - 
+        name: svc-client-keepalive
+        label: "Client Keep-Alive"
+        description: "Enable client keep-alive for the service group."
+        type: string
+        default: "YES"
+        allowed-values: 
+          - "NO"
+          - "YES"
+      - 
+        name: svc-tcp-buffering
+        label: "TCP buffering"
+        description: "Enable TCP buffering for the service group."
+        type: string
+        default: "YES"
+        allowed-values: 
+          - "NO"
+          - "YES"
+      - 
+        name: svc-max-clients
+        label: "Maximum Clients"
+        description: "Maximum number of simultaneous open connections for the service group."
+        type: number
+      - 
+        name: svc-max-requests
+        label: "Maximum Requests"
+        description: "Maximum number of requests that can be sent on a persistent connection to the service group."
+        type: number
+      - 
+        name: svc-client-timeout
+        label: "Client Timeout (seconds)"
+        description: "Time, in seconds, after which to terminate an idle client connection."
+        default: 180
+        type: number
+      - 
+        name: svc-server-timeout
+        label: "Server Timeout (seconds)"
+        description: "Time, in seconds, after which to terminate an idle server connection."
+        type: number
+        default: 360
+      - 
+        name: svc-use-proxy-port
+        label: "Use Proxy Port for Server Connections"
+        description: "Use the proxy port as the source port when initiating connections with the server."
+        type: string
+        default: "YES"
+        allowed-values: 
+          - "NO"
+          - "YES"
+      - 
+        name: svc-compression
+        label: "Service Compression"
+        description: "Enable compression for the specified service."
+        type: string
+        default: "YES"
+        allowed-values: 
+          - "NO"
+          - "YES"
+      - 
+        name: svc-state
+        label: "Service State"
+        description: "Initial state of the service group."
+        type: string
+        default: ENABLED
+        allowed-values: 
+          - DISABLED
+          - ENABLED
+      - 
+        name: svc-downstate-flush
+        label: "Service Down State Flush"
+        description: "Flush all active transactions associated with all the services in the service group whose state transitions from UP to DOWN."
+        type: string
+        default: ENABLED
+        allowed-values: 
+          - DISABLED
+          - ENABLED
+      #BELOW ITEM UNUSED!!
+      - 
+        name: svc-enable-health-monitor
+        label: "Enable Service Monitoring"
+        description: "Enabled Health Monitoring if true"
+        type: string
+        default: "YES"
+        allowed-values:
+          - "YES"
+          - "NO"
+        gui:
+          hidden: true
+      - 
+        name: svc-comment
+        label: "Service Comment"
+        description: "Any information about the service group."
+        type: string
+  - 
+    name: certificates
+    label: "Certificate"
+    type: neustar::lbvserver-certificate-params[]
+    max-items: 1
+  - 
+    name: sslprof-name
+    label: "SSL Profile Name"
+    type: string
+
+  -
+    name: monitor
+    label: "Monitor"
+    type: string
+    default: tcp-60
+    allowed-values:
+      - tcp-60
+      - icmp-60
+  - 
+    name: wafprofile-names
+    label: "WAF Profile Names"
+    type: string[]
+    max-items: 1
+  - 
+    name: botprofile-names
+    label: "Bot Profile Names"
+    type: string[]
+    max-items: 1
+  - 
+    name: responder-names
+    label: "Responder Names"
+    type: string[]
+

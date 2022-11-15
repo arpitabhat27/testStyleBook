@@ -1,0 +1,27 @@
+name: arb-list-params
+namespace: neustar.citrix.adc.stylebooks 
+version: "6.2"
+display-name: "StyleBook contains the parameters of an Responder config"
+description: "StyleBook contains the settings of an Responder config"
+schema-version: "1.0"
+private: true
+parameters:
+    -
+      name: name
+      type: string
+      label: Name
+      description: Name
+      required: true
+    - name: list-type
+      type: string
+      label: Type
+      allowed-values:
+        - ipv4
+        - ipv6
+        - countryCode
+    -
+      name: values
+      type: string[]
+      label: List of items
+      description: Enter list of items below.  Do not mix and match countries and IP, nor IPv4 and IPv6!
+      required: true

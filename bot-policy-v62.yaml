@@ -1,0 +1,58 @@
+---
+name: bot-policy
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: "StyleBook for BOT Policy configuration"
+description: "This stylebook configures a default config for an BOT policy."
+schema-version: "1.0"
+private: true
+import-stylebooks:
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: stlb
+    version: "6.2"
+  -
+    namespace: neustar.citrix.adc.commontypes
+    prefix: cmtypes
+    version: "6.2"
+  -
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+parameters:
+  -
+    name: customer-name
+    label: Customer
+    description: Customer Name or ID that is used to differentiate a customer's config objects
+    type: string
+    required: true
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+parameters-default-sources:
+  - cmtypes::bot-policy-params
+substitutions:
+  bot-profilename(customername, profilename): $customername + "-" + $profilename + "-b"
+  bot-policyname(customername, profilename): $customername + "-" + $profilename + "-bot-pol"
+  onoff-replace:
+    false: "OFF"
+    true: "ON"
+components:
+  -
+    name: bot-profile-comp
+    type: stlb::bot-profile
+    properties:
+      name: $substitutions.bot-profilename($parameters.customer-name,$parameters.profile-name)
+      customer-name: $parameters.customer-name
+    properties-default-sources:
+      - $parameters.profile-settings
+  -
+    name: bot-policy-comp
+    type: ns::botpolicy
+    description: This component creates bot policy
+    properties:
+      name: $substitutions.bot-policyname($parameters.customer-name,$parameters.profile-name)
+      rule: $parameters.rule
+      profilename: $substitutions.bot-profilename($parameters.customer-name,$parameters.profile-name)
+outputs:
+   -
+    name: bot-policy
+    value: $components.bot-policy-comp.properties.name

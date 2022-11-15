@@ -1,0 +1,38 @@
+name: app-template-params
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+display-name: Neustar App Template Params
+description: |    
+    This StyleBook contains the configuration elements to deploy for a Neustar application.
+schema-version: "1.0"
+private: true
+import-stylebooks: 
+  - 
+    namespace: com.citrix.adc.commontypes
+    prefix: cmtypes
+    version: "1.0"
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "6.2"
+parameters:
+  - 
+    name: appname
+    label: "Application Name"
+    description: "Name of the Load Balanced application"
+    type: string
+    gui:
+      updatable: false
+    required: true
+  - 
+    name: virtual-ip
+    label: "Virtual IP address"
+    description: "Virtual IP address representing the Load Balanced application"
+    type: ipaddress
+    required: true
+  -
+    name: lbvservers
+    label: Load Balancers
+    description: List of unique endpoints sharing the same VIP
+    type: neustar::lbvserver-template-params[]
+    required: true

@@ -1,0 +1,206 @@
+name: lbvserver-template
+namespace: neustar.citrix.adc.stylebooks
+version: "6.2"
+private: true
+description: |    
+    This StyleBook contains the configuration for one virtual service of an app.
+schema-version: "1.0"
+import-stylebooks: 
+  - 
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+  - 
+    namespace: com.citrix.adc.stylebooks
+    prefix: stlb
+    version: "1.0"
+  - 
+    namespace: com.citrix.adc.stylebooks
+    prefix: stlb12
+    version: "1.2"
+  -
+    namespace: neustar.citrix.adc.stylebooks
+    prefix: neustar
+    version: "6.2"
+parameters:
+  - 
+    name: customer-name
+    label: Customer
+    description: Customer Name or ID that is used to differentiate a customer's config objects
+    type: string
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+    required: true
+
+  - 
+    name: appname
+    label: "Application Name"
+    description: "Name of the Load Balanced application"
+    type: string
+    gui:
+      updatable: false
+    required: true
+  - 
+    name: virtual-ip
+    label: "Virtual IP address"
+    description: "Virtual IP address representing the Load Balanced application"
+    type: ipaddress
+    required: true
+
+parameters-default-sources:
+  - neustar::lbvserver-template-params
+  - neustar::shared-configs-for-apps-params
+substitutions:
+  #monitorname(appname, name): $appname + "-" + $name
+  ciphergroupname(customername, name): $customername + "-" + $name + "-cgf"
+  ciphergroupnamebk(customername, name): $customername + "-" + $name + "-cgb"
+  backendciphergroupname(customername, aname, usefront): if-then-else($usefront, $customername + "-" + $aname + "-ciphers", "DEFAULT_BACKEND")
+  sslprofilename(customername, name): $customername + "-" + $name + "-spf" 
+  sslprofilenamebk(customername, name): $customername + "-" + $name + "-spb"
+  unique-appname(customername, appname): $customername + "-" + $appname
+  stringsequal(s1, s2): if-then-else(str($s1) == str($s2), true, false)
+  httponlystring(st, proto): if-then-else($proto == "SSL" or $proto == "HTTP", $st)
+  istcp(proto): if-then-else($proto == "DNS" or $proto == "UDP", false, true)
+  istls(proto): if-then-else($proto == "SSL" or $proto == "DTLS", true, false)
+  state:
+    true: ENABLED
+    false: DISABLED
+  stateyn:
+    true: "YES"
+    false: "NO"
+  is-none-bool(obj): if-then-else(exists($obj), true, false)
+  truncate-host(name): if-then-else(len($name) < 90, $name, truncate($name, 90))
+
+components:
+  - 
+    name: lbvserver-comp
+    type: ns::lbvserver
+    properties: 
+      name: $parameters.customer-name + "-" + $parameters.appname + "-" + str($parameters.name) + "-lb"
+      ipv46: $parameters.virtual-ip
+      servicetype: $parameters.lb-service-type
+      port?: $parameters.lb-virtual-port
+      lbmethod?: $parameters.lb-advanced.algorithm
+      persistencetype?: $parameters.lb-advanced.persistence
+    #  persistencebackup?: $parameters.lb-advanced.persistence-backup
+    #  rule?: $parameters.lb-advanced.persistence-rule
+    #  backuppersistencetimeout?: $parameters.lb-advanced.backup-persistence-timeout
+      clttimeout?: $parameters.lb-advanced.client-timeout
+      timeout?: $parameters.lb-advanced.timeout
+      # datalength?: $parameters.lb-advanced.token-datalength
+      # dataoffset?: $parameters.lb-advanced.token-dataoffset
+      insertvserveripport?: $parameters.lb-advanced.insert-vserver-ipport
+      redirurl?: $parameters.lb-advanced.redirect-url
+    #  somethod?: $parameters.lb-advanced.spillover-method
+    #  sothreshold?: $parameters.lb-advanced.spillover-threshold
+    #  httpprofilename?: $parameters.lb-advanced.http-profile
+      downstateflush?: $parameters.lb-advanced.flush-on-state-down
+      # authentication?: $parameters.lb-advanced.auth-params.authentication
+      # authenticationhost?: $parameters.lb-advanced.auth-params.authentication-host
+      # authnvsname?: $parameters.lb-advanced.auth-params.authentication-vserver-name
+      # authn401?: $parameters.lb-advanced.auth-params.authentication-http-401
+      appflowlog?: $parameters.lb-advanced.appflow-log
+      comment?: $parameters.lb-advanced.comment
+      nodefaultbindings: "YES"
+    components: 
+      -
+        name: sslvserver-comp
+        type: ns::sslvserver
+        condition: $substitutions.istls($parameters.lb-service-type) and exists($parameters.sslprof-name)
+        properties:
+          vservername: $parent.properties.name
+          sslprofile: $substitutions.sslprofilename($parameters.customer-name, $parameters.sslprof-name)
+      -
+        name: origin-members
+        type: ns::server
+        condition: $parameters.svc-servers
+        repeat: $parameters.svc-servers
+        repeat-item: server
+        properties: 
+          name: $parameters.customer-name + "-" + $server.host + "-server"
+          domain?: if-then-else($server.host-type == "hostname", $server.host)
+          ipaddress?: if-then-else($server.host-type == "ipaddress", $server.host)
+        components:
+            -
+              name: service-members
+              type: ns::service
+              properties: 
+                name: $parameters.customer-name + "-" + $substitutions.truncate-host(str($server.host)) + "-" + str($parameters.svc-service-type) + "-" + str($server.port) + "-svc"
+                servername: $parent.properties.name
+                port: $server.port
+                servicetype: $parameters.svc-service-type
+                cip?: $substitutions.httponlystring(if-then-else($parameters.svc-advanced.svc-client-ip-header, "ENABLED"), $parameters.svc-service-type)
+                cipheader?: $substitutions.httponlystring($parameters.svc-advanced.svc-client-ip-header, $parameters.svc-service-type)
+                cka?: $parameters.svc-advanced.svc-client-keepalive
+                clttimeout?: $parameters.svc-advanced.svc-client-timeout
+                svrtimeout?: $parameters.svc-advanced.svc-server-timeout
+                maxclient?: $parameters.svc-advanced.svc-max-clients
+                maxreq?: $parameters.svc-advanced.svc-max-requests
+                tcpb?: if-then-else($substitutions.istcp($parameters.svc-service-type), $parameters.svc-advanced.svc-tcp-buffering, "NO")
+                # usip?: $parameters.svc-advanced.svc-use-source-ip
+                useproxyport?: if-then-else($substitutions.istcp($parameters.svc-service-type), $parameters.svc-advanced.svc-use-proxy-port, "NO")
+                cmp?: $substitutions.httponlystring($parameters.svc-advanced.svc-compression, $parameters.svc-service-type)
+                #cmp?: $parameters.svc-advanced.svc-compression
+                # sc?: $parameters.svc-advanced.svc-sure-connect
+                sp?: if-then-else($substitutions.istcp($parameters.svc-service-type), $parameters.svc-advanced.svc-surge-protection, "OFF")
+                # customserverid?: $parameters.svc-advanced.svc-custom-server-id
+                downstateflush?: $parameters.svc-advanced.svc-downstate-flush
+                state?: $parameters.svc-advanced.svc-state
+                healthmonitor?: $substitutions.stateyn[$server.monitor]
+                comment?: $parameters.svc-advanced.svc-comment
+                nodefaultbindings: "YES"
+              components:
+                -
+                  name: sslservice-comp
+                  type: ns::sslservice
+                  condition: $substitutions.istls($parameters.lb-service-type) and exists($parameters.sslprof-name)
+                  properties:
+                    servicename: $parent.properties.name
+                    sslprofile: $substitutions.sslprofilenamebk($parameters.customer-name, $parameters.sslprof-name)
+                -
+                  name: lbvserver-service-binding
+                  type: ns::lbvserver_service_binding
+                  properties: 
+                   name: $parent.parent.parent.properties.name
+                   servicename: $parent.properties.name
+                -
+                  name: monitor-service-binding-comp
+                  type: ns::service_lbmonitor_binding
+                  condition: $parameters.monitor != "none"
+                  properties:
+                    name: $parent.properties.name
+                    monitor_name: $parameters.monitor
+
+      -
+        name: appfw-policies-bindings-comp
+        type: neustar::appfw-policies
+        condition: ($parameters.lb-service-type == "SSL" or $parameters.lb-service-type == "HTTP") and $parameters.wafprofile-names
+        properties:
+            customer-name: $parameters.customer-name
+            vserver-name: $parent.properties.name
+            policyname-list: $parameters.wafprofile-names
+      -
+        name: bot-policies-bindings-comp
+        type: neustar::bot-policies
+        condition: ($parameters.lb-service-type == "SSL" or $parameters.lb-service-type == "HTTP") and $parameters.botprofile-names
+        properties:
+            customer-name: $parameters.customer-name
+            vserver-name: $parent.properties.name
+            policyname-list: $parameters.botprofile-names
+      -
+        name: shared-configs-for-app-comp
+        type: neustar::lbvserver-shared-configs-template
+        properties-default-sources:
+          - $parameters
+        properties:
+            vserver-name: $parent.properties.name
+      -
+        name: certkeys-bindings-comp
+        type: neustar::lbvserver-certkeys-binding
+        description: This component creates all the certkeys from the certificates, and binds them to the vserver
+        condition: $parameters.lb-service-type == "SSL"
+        repeat: $parameters.certificates
+        repeat-item: cert
+        properties:
+          customer-name: $parameters.customer-name
+          vserver-name: $parent.properties.name
+          certificate: $cert

@@ -1,0 +1,54 @@
+---
+name: appfw-config-params
+namespace: neustar.citrix.adc.stylebooks 
+version: "6.2"
+display-name: "StyleBook contains the parameters of an AppFw config"
+description: "StyleBook contains the settings of an AppFw config"
+schema-version: "1.0"
+private: true
+import-stylebooks:
+  - 
+    namespace: com.citrix.adc.commontypes
+    prefix: cmtypes
+    version: "1.0"
+  - 
+    namespace: neustar.citrix.adc.commontypes
+    prefix: neustar
+    version: "6.2"
+parameters:
+  -
+    name: profile-name
+    label: AppFw Profile Name
+    type: string 
+    required: true
+  - 
+    name: profile-type
+    description: |
+     Application firewall profile type, which controls which security checks and settings are applied to content that is filtered with the profile.
+    label: Type of profile
+    type: string[]
+    allowed-values: 
+      - HTML
+      - XML
+      - JSON
+    default:
+      - HTML
+    max-items: 3
+  -
+    name: rule
+    label: AppFw Policy Rule
+    description: |
+        The AppFw Policy rule (PI expression) to select traffic for which the AppFw profile settings are applied.
+        The default is to apply the appfw settings to all traffic on the VIP.
+    type: string 
+    required: true
+    default: "true"
+  -
+    name: profile-settings
+    label: AppFw Profile Settings
+    type: object
+    required: true
+    gui:
+      collapse_pane: true
+    parameters-default-sources:
+      - neustar::appfw-profile-params-adv

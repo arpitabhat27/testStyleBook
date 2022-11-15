@@ -1,0 +1,697 @@
+---
+name: appfw-profile-adv
+namespace: neustar.citrix.adc.stylebooks 
+version: "6.2"
+private: true
+display-name: StyleBook for creating an AppFw profile
+description: This Stylebook configures an AppFw config.
+schema-version: "1.0"
+import-stylebooks:
+  - 
+    namespace: neustar.citrix.adc.commontypes
+    prefix: neustar
+    version: "6.2"
+  - 
+    namespace: netscaler.nitro.config
+    prefix: ns
+    version: "13.0"
+parameters:
+  - 
+    name: name
+    type: string
+    required: true
+  - 
+    name: type
+    type: string[]
+  - 
+    name: customer-name
+    type: string
+    pattern: "^[A-Z0-9]{2}_[A-Z0-9]{2,10}$"
+    required: true
+parameters-default-sources:
+  - neustar::appfw-profile-params-adv
+substitutions: 
+  is-not-none(obj): exists($obj)
+  is-none-array(obj): if-then-else(exists($obj), $obj, $substitutions.nonlist)
+  nonlist:
+    - none
+  is-none-bool(obj): if-then-else(exists($obj), $obj, false)
+  enabled-replace(boolval): if-then-else($boolval, str("ENABLED"), str("DISABLED"))
+  isregex-replace(boolval): if-then-else($boolval, str("REGEX"), str("NOTREGEX"))
+  onoff-replace(boolval): if-then-else($boolval, str("ON"), str("OFF"))
+  str-esc(val): str("\"") + $val + str("\"")
+  sig-name(sname): $parameters.customer-name + "-" + $sname + "-sigs"
+
+  policy-rule(func, name): $func + "(" + $substitutions.str-esc($name) + ")"
+  default-deny-urls: 
+     - str('Unix_core_file_attacks')
+     - str('Unix_file_attacks')
+     - str('Command_injection_attack')
+     - str('HTR_source_disclosure')
+     - str('Apache_possible_directory_index_disclosure_vulnerability')
+     - str('Netscape_enterprise_server_directory_indexing_vulnerability')
+     - str('Printer_buffer_overflow')
+     - str('CodeRed')
+     - str('Netscape_enterprise_server_web_publishing_vulnerability')
+     - str('Nimbda-3')
+     - str('Nimbda-4')
+     - str('IIS_executable_file_parsing_vulnerability-1')
+     - str('IIS_executable_file_parsing_vulnerability-2')
+     - str('IIS_executable_file_parsing_vulnerability-3')
+     - str('Script_exploit')
+     - str('Microsoft_IIS_UNC_mapped_virtual_host_vulnerability')
+     - str('Microsoft_IIS_UNC_path_disclosure_vulnerability')
+     - str('Index_server_buffer_overflow')
+     - str('Access_attacks')
+     - str('Password_file_attacks')
+     - str('Front_Page_server_extensions_buffer_overflow-1')
+     - str('Front_Page_server_extensions_buffer_overflow-2')
+     - str('Webhits_source_disclosure')
+     - str('Debug_attacks')
+     - str('System_command_attacks')
+     - str('Front_Page_server_extensions_path_disclosure_vulnerability')
+     - str('WSDL_scanning_attack_queryparam_wsdl')
+     - str('WSDL_scanning_attack_dot_wsdl')
+     - str('WSDL_scanning_attack_slash_wsdl')
+  default-deny-urls-regex: 
+     "Unix_core_file_attacks": str('/core(/.*)?$')
+     "Unix_file_attacks": str('[\\/]etc[\\/](passwd|group|hosts)')
+     "Command_injection_attack": str("([ /=]|\\t|\\n)(ls|rm|cat)([ ;'" + "\\\"&].*)?$")
+     "HTR_source_disclosure": str('^[^?]*[+][.]htr')
+     "Apache_possible_directory_index_disclosure_vulnerability": str('^[^?]*/[?][SM]=[AD]')
+     "Netscape_enterprise_server_directory_indexing_vulnerability": str('^[^?]*/[?]wp-')
+     "Printer_buffer_overflow": str('^[^?]*/NULL[.]printer')
+     "CodeRed": str('^[^?]*/default[.]ida[?]N+')
+     "Netscape_enterprise_server_web_publishing_vulnerability": str('^[^?]*/publisher')
+     "Nimbda-3": str('^[^?]*Admin[.]dll')
+     "Nimbda-4": str('^[^?]*/winnt/')
+     "IIS_executable_file_parsing_vulnerability-1": str('^[^?]*[+]dir')
+     "IIS_executable_file_parsing_vulnerability-2": str('^[^?]*/georgi[.]asp')
+     "IIS_executable_file_parsing_vulnerability-3": str('^[^?]*[.](bat|ini|exe)(|[?].*)$')
+     "Script_exploit": str('^[^?]*[.](cgi|pl|php|bat)([/?].*)?[|]')
+     "Microsoft_IIS_UNC_mapped_virtual_host_vulnerability": str('^[^?]*[.]asp/.*')
+     "Microsoft_IIS_UNC_path_disclosure_vulnerability": str('^[^?]*[.]htx')
+     "Index_server_buffer_overflow": str('^[^?]*[.]id[aq]')
+     "Access_attacks": str('^[^?]*(htaccess|access_log)([.][^/?]*)?([~])?([?].*)?$')
+     "Password_file_attacks": str('^[^?]*(passwd|passwords?)([.][^/?]*)?([?].*)?$')
+     "Front_Page_server_extensions_buffer_overflow-1": str('^[^?]*dvwssr[.]dll')
+     "Front_Page_server_extensions_buffer_overflow-2": str('^[^?]*fp30reg[.]dll')
+     "Webhits_source_disclosure": str('^[^?]*null[.]htw')
+     "Debug_attacks": str('debug[.][^/?]*(|[?].*)$')
+     "System_command_attacks": str('system( |\\t|\\n)*[(]')
+     "Front_Page_server_extensions_path_disclosure_vulnerability": str('^[^?]*/_vti_bin/shtml[.]')
+     "WSDL_scanning_attack_queryparam_wsdl": str("^[^?]+[?](.*[=].*[&])*wsdl([&].*[=].*)*([#].*)?$")
+     "WSDL_scanning_attack_dot_wsdl": str("^[^?]+[/]([^.])+[.]wsdl([?][^#]*)?([#].*)?$")
+     "WSDL_scanning_attack_slash_wsdl": str('^[^?]+[/]wsdl([?][^#]*)?([#].*)?$')
+  default-xmlwsichecks: str("BP1201, R1000, R1001, R1003, R1004, R1005, R1006, R1007, R1011, R1012, R1013, R1014, R1015, R1031, R1032, R1033, R1109, R1111, R1126, R1132, R1140, R1141, R2113, R2211, R2714, R2729, R2735, R2738, R2740, R2744")
+  wsicheck-not-BP1201(wsicheck): $wsicheck != "BP1201"
+  wsicheck-is-ALL(wsicheck): $wsicheck == "ALL"
+  ffcaction-has-none(ffcaction): $ffcaction == "none"
+  csrfaction-has-none(csrfaction): $csrfaction == "none"
+  selected-checkname(name, value): if-then-else($value, $name)
+  selected-checks-string: join($substitutions.selected-checks-list, ",")
+  selected-checks-list:
+    - $substitutions.selected-checkname("R1000", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1000-check)
+    - $substitutions.selected-checkname("R1001", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1001-check)
+    - $substitutions.selected-checkname("R1003", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1003-check)
+    - $substitutions.selected-checkname("R1004", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1004-check)
+    - $substitutions.selected-checkname("R1005", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1005-check)
+    - $substitutions.selected-checkname("R1006", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1006-check)
+    - $substitutions.selected-checkname("R1007", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1007-check)
+    - $substitutions.selected-checkname("R1011", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1011-check)
+    - $substitutions.selected-checkname("R1012", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1012-check)
+    - $substitutions.selected-checkname("R1013", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1013-check)
+    - $substitutions.selected-checkname("R1014", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1014-check)
+    - $substitutions.selected-checkname("R1015", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1015-check)
+    - $substitutions.selected-checkname("R1031", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1031-check)
+    - $substitutions.selected-checkname("R1032", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1032-check)
+    - $substitutions.selected-checkname("R1033", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1033-check)
+    - $substitutions.selected-checkname("R1109", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1109-check)
+    - $substitutions.selected-checkname("R1111", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1111-check)
+    - $substitutions.selected-checkname("R1126", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1126-check)
+    - $substitutions.selected-checkname("R1132", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1132-check)
+    - $substitutions.selected-checkname("R1140", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1140-check)
+    - $substitutions.selected-checkname("R1141", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R1141-check)
+    - $substitutions.selected-checkname("R2113", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2113-check)
+    - $substitutions.selected-checkname("R2211", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2211-check)
+    - $substitutions.selected-checkname("R2714", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2714-check)
+    - $substitutions.selected-checkname("R2729", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2729-check)
+    - $substitutions.selected-checkname("R2735", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2735-check)
+    - $substitutions.selected-checkname("R2738", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2738-check)
+    - $substitutions.selected-checkname("R2740", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2740-check)
+    - $substitutions.selected-checkname("R2744", $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.R2744-check)
+components:
+  - 
+    name: appfw-profile-comp
+    type: ns::appfwprofile
+    properties:
+      name: $parameters.name
+      type: $parameters.type
+      comment?: $parameters.comment
+      #logeverypolicyhit?: $substitutions.onoff-replace($parameters.logeverypolicyhit)
+      signatures?: if-then-else($parameters.enablesignatures, $substitutions.sig-name($parameters.enablesignatures.signaturename))
+      starturlaction: $substitutions.nonlist
+      #starturlclosure?: $substitutions.onoff-replace($parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.starturlclosure)
+      denyurlaction: $substitutions.is-none-array($parameters.denyurl-settings.denyurlaction)
+      #refererheadercheck?: $parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.refererheadercheck
+      cookieconsistencyaction?: $parameters.advanced-profile-settings.cookie-settings.cookieconsistencyaction
+      # cookieencryption?: $parameters.advanced-profile-settings.cookie-settings.cookie-default-settings.cookieencryption
+      # cookieproxying?: $parameters.advanced-profile-settings.cookie-settings.cookie-default-settings.cookieproxying
+      # addcookieflags?: $parameters.advanced-profile-settings.cookie-settings.cookie-default-settings.addcookieflags
+      #cookietransforms?: $substitutions.onoff-replace($parameters.advanced-profile-settings.cookie-settings.cookie-default-settings.cookietransforms)
+      fieldconsistencyaction?: $parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistencyaction
+      sessionlessfieldconsistency?: $parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistency-default-settings.sessionlessfieldconsistency
+      csrftagaction?: $parameters.advanced-profile-settings.csrf-settings.csrftagaction
+      crosssitescriptingaction: $substitutions.is-none-array($parameters.crosssitescripting-settings.crosssitescriptingaction)
+      crosssitescriptingcheckcompleteurls?: $substitutions.onoff-replace($parameters.crosssitescripting-settings.crosssitescripting-default-settings.crosssitescriptingcheckcompleteurls)
+      #crosssitescriptingtransformunsafehtml?: $substitutions.onoff-replace($parameters.crosssitescripting-settings.crosssitescripting-default-settings.crosssitescriptingtransformunsafehtml)
+      #fileuploadtypesaction?: $parameters.fileuploadtypes-settings.fileuploadtypesaction
+      sqlinjectionaction: $substitutions.is-none-array($parameters.sqlinjection-settings.sqlinjectionaction)
+      sqlinjectiongrammar: $substitutions.onoff-replace($parameters.sqlinjection-settings.sqlinjectiongrammar)
+      sqlinjectionchecksqlwildchars?: $substitutions.onoff-replace($parameters.sqlinjection-settings.sqlinjection-default-settings.sqlinjectionchecksqlwildchars)
+      #sqlinjectiontransformspecialchars?: $substitutions.onoff-replace($parameters.sqlinjection-settings.sqlinjection-default-settings.sqlinjectiontransformspecialchars)
+      sqlinjectiontype?: $parameters.sqlinjection-settings.sqlinjection-default-settings.sqlinjectiontype
+      fieldformataction: $substitutions.is-none-array($parameters.fieldformat-settings.fieldformataction)
+      defaultfieldformatmaxlength?: $parameters.fieldformat-settings.fieldformat-default-settings.defaultfieldformatmaxlength
+      defaultfieldformatminlength?: $parameters.fieldformat-settings.fieldformat-default-settings.defaultfieldformatminlength
+      defaultfieldformattype?: $parameters.fieldformat-settings.fieldformat-default-settings.defaultfieldformattype
+      bufferoverflowaction?: $substitutions.is-none-array($parameters.bufferoverflow-settings.bufferoverflowaction)
+      bufferoverflowmaxcookielength?: $parameters.bufferoverflow-settings.bufferoverflowmaxcookielength
+      bufferoverflowmaxheaderlength?: $parameters.bufferoverflow-settings.bufferoverflowmaxheaderlength
+      bufferoverflowmaxurllength?: $parameters.bufferoverflow-settings.bufferoverflowmaxurllength
+      #creditcardaction?: $parameters.advanced-profile-settings.creditcard-settings.creditcardaction
+      #creditcard?: $parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.creditcard
+      #creditcardmaxallowed?: $parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.creditcardmaxallowed
+      #creditcardxout?: $substitutions.onoff-replace($parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.creditcardxout)
+      #dosecurecreditcardlogging?: $substitutions.onoff-replace($parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.dosecurecreditcardlogging)
+      contenttypeaction?: $parameters.advanced-profile-settings.contenttype-settings.contenttypeaction
+      #requestcontenttype?: $parameters.default-settings.requestcontenttype
+      responsecontenttype?: $parameters.default-settings.responsecontenttype
+      inspectcontenttypes?: $parameters.advanced-profile-settings.contenttype-settings.contenttype-default-settings.inspectcontenttypes    
+      jsonsqlinjectionaction: $substitutions.is-none-array($parameters.advanced-profile-settings.json-settings.json-sqlinjection-settings.jsonsqlinjectionaction)
+      jsonsqlinjectiontype?: $parameters.advanced-profile-settings.json-settings.json-sqlinjection-settings.jsonsqlinjectiontype
+      jsonsqlinjectiongrammar?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-sqlinjection-settings.jsonsqlinjectiongrammar)
+      jsondosaction: $substitutions.is-none-array($parameters.advanced-profile-settings.json-settings.json-dos-settings.jsondosaction)
+      jsonxssaction: $substitutions.is-none-array($parameters.advanced-profile-settings.json-settings.json-xss-settings.jsonxssaction)
+      jsoncmdinjectionaction: $substitutions.is-none-array($parameters.advanced-profile-settings.json-settings.json-cmdinjection-settings.jsoncmdinjectionaction)
+      jsoncmdinjectiontype?: $parameters.advanced-profile-settings.json-settings.json-cmdinjection-settings.jsoncmdinjectiontype
+      jsonerrorobject?: "json_nsr_waf_error"
+      xmlattachmentaction?: $substitutions.nonlist
+      xmldosaction: $substitutions.nonlist
+      xmlerrorobject?: "xml_nsr_waf_error"
+      xmlformataction: $substitutions.is-none-array($parameters.advanced-profile-settings.xml-settings.xmlformataction)
+      xmlsqlinjectionaction: $substitutions.is-none-array($parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjectionaction)
+      xmlsqlinjectionchecksqlwildchars?: $substitutions.onoff-replace($parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjection-default-settings.xmlsqlinjectionchecksqlwildchars)
+      xmlsqlinjectionparsecomments?: $parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjection-default-settings.xmlsqlinjectionparsecomments
+      xmlsqlinjectiontype?: $parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjection-default-settings.xmlsqlinjectiontype
+      xmlvalidationaction: $substitutions.nonlist
+      xmlwsiaction: $substitutions.is-none-array($parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.xmlwsiaction)
+      xmlxssaction: $substitutions.is-none-array($parameters.advanced-profile-settings.xml-settings.xml-xss-settings.xmlxssaction)
+      xmlsoapfaultaction: $substitutions.is-none-array($parameters.advanced-profile-settings.xml-settings.xmlsoapfaultaction)
+      usehtmlerrorobject?: "on"
+      htmlerrorobject?: "html_nsr_waf_error"
+      striphtmlcomments?: $parameters.default-settings.striphtmlcomments
+      #stripxmlcomments?: $parameters.advanced-profile-settings.xml-settings.stripxmlcomments
+      streaming?: $substitutions.onoff-replace($parameters.default-settings.streaming)
+      defaultcharset?: $parameters.default-settings.defaultcharset
+      postbodylimit?: $parameters.default-settings.postbodylimit
+      postbodylimitaction?: $parameters.default-settings.postbodylimitaction
+      postbodylimitsignature?: $parameters.default-settings.postbodylimitsignature
+      #fileuploadmaxnum?: $parameters.fileuploadtypes-settings.fileuploadmaxnum
+      canonicalizehtmlresponse?: $substitutions.onoff-replace($parameters.default-settings.canonicalizehtmlresponse)
+      #sessionlessurlclosure?: $substitutions.onoff-replace($parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.sessionlessurlclosure)
+      #excludefileuploadfromchecks?: $substitutions.onoff-replace($parameters.fileuploadtypes-settings.excludefileuploadfromchecks)
+      sqlinjectionparsecomments?: $parameters.sqlinjection-settings.sqlinjection-default-settings.sqlinjectionparsecomments
+      invalidpercenthandling?: $parameters.default-settings.invalidpercenthandling
+      checkrequestheaders?: $substitutions.onoff-replace($parameters.default-settings.checkrequestheaders)
+      optimizepartialreqs?: $substitutions.onoff-replace($parameters.default-settings.optimizepartialreqs)
+      enableformtagging?: if-then-else($parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistency-default-settings.sessionlessfieldconsistency != "OFF" or len(filter($substitutions.ffcaction-has-none,$parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistencyaction)) == 0 or  len(filter($substitutions.csrfaction-has-none,$parameters.advanced-profile-settings.csrf-settings.csrftagaction)) == 0,"ON","OFF")
+      #enableformtagging: $substitutions.onoff-replace($substitutions.is-none-bool($parameters.advanced-profile-settings.default-settings.enableformtagging))
+      #exemptclosureurlsfromsecuritychecks?: $substitutions.onoff-replace($parameters.advanced-profile-settings.default-settings.exemptclosureurlsfromsecuritychecks)
+      rfcprofile?: $parameters.default-settings.rfcprofile
+      #dynamiclearning?: $parameters.advanced-profile-settings.dynamicprofiling-settings.dynamicprofiling
+      verboseloglevel?: $parameters.default-settings.verboseloglevel
+      urldecoderequestcookies?: $substitutions.onoff-replace($parameters.default-settings.urldecoderequestcookies)
+      semicolonfieldseparator?: $substitutions.onoff-replace($parameters.default-settings.semicolonfieldseparator)
+      percentdecoderecursively?: $substitutions.onoff-replace($parameters.default-settings.percentdecoderecursively)
+      fileuploadtypesaction: $substitutions.nonlist
+      cmdinjectionaction?: $substitutions.is-none-array($parameters.advanced-profile-settings.cmdinjection-settings.cmdinjectionaction)
+      cmdinjectiontype?: $parameters.advanced-profile-settings.cmdinjection-settings.cmdinjectiontype
+    components:
+      -
+        name: appfw-profile-logexpression-binding-comp
+        type: ns::appfwprofile_logexpression_binding
+        properties:
+          name: $parent.properties.name
+          logexpression: 'log_headers'
+          as_logexpression: 'nsr_log_headers'
+      - 
+        name: appfw-profile-crosssitescripting-binding-comp
+        type: ns::appfwprofile_crosssitescripting_binding
+        condition: $parameters.crosssitescripting-settings.crosssitescripting-default-settings.appfwprofile-crosssitescripting-binding
+        repeat: $parameters.crosssitescripting-settings.crosssitescripting-default-settings.appfwprofile-crosssitescripting-binding
+        repeat-item: xss-binding
+        properties:
+          name: $parent.properties.name
+          as_scan_location_xss?: $xss-binding.as-scan-location-xss
+          crosssitescripting?: $xss-binding.crosssitescripting
+          formactionurl_xss?: $xss-binding.formactionurl-xss
+          isregex_xss?: $substitutions.isregex-replace($xss-binding.isregex-xss)
+          as_value_type_xss?: $xss-binding.as-value-type-xss
+          isvalueregex_xss?: if-then-else(len($xss-binding.as-value-type-xss) > 0 and len($xss-binding.as-value-expr-xss) > 0, $substitutions.isregex-replace($xss-binding.isvalueregex-xss))
+          as_value_expr_xss?: $xss-binding.as-value-expr-xss
+          state?: $substitutions.enabled-replace($xss-binding.state)
+      - 
+        name: appfw-profile-sqlinjection-binding-comp
+        type: ns::appfwprofile_sqlinjection_binding
+        condition: $parameters.sqlinjection-settings.sqlinjection-default-settings.appfwprofile-sqlinjection-binding
+        repeat: $parameters.sqlinjection-settings.sqlinjection-default-settings.appfwprofile-sqlinjection-binding
+        repeat-item: sql-inj-binding
+        properties: 
+          name: $parent.properties.name
+          as_scan_location_sql?: $sql-inj-binding.as-scan-location-sql
+          formactionurl_sql?: $sql-inj-binding.formactionurl-sql
+          isregex_sql?: $substitutions.isregex-replace($sql-inj-binding.isregex-sql)
+          sqlinjection?: $sql-inj-binding.sqlinjection
+          as_value_type_sql?: $sql-inj-binding.as-value-type-sql
+          as_value_expr_sql?: $sql-inj-binding.as-value-expr-sql
+          state?: $substitutions.enabled-replace($sql-inj-binding.state)
+          isvalueregex_sql?: if-then-else(len($sql-inj-binding.as-value-type-sql) > 0 and len($sql-inj-binding.as-value-expr-sql) > 0, $substitutions.isregex-replace($sql-inj-binding.isvalueregex-sql))
+      - 
+        name: appfw-profile-cmdinjection-binding-comp
+        type: ns::appfwprofile_cmdinjection_binding
+        condition: $parameters.advanced-profile-settings.cmdinjection-settings.appfwprofile-cmdinjection-binding
+        repeat: $parameters.advanced-profile-settings.cmdinjection-settings.appfwprofile-cmdinjection-binding
+        repeat-item: cmd-inj-binding
+        properties: 
+          name: $parent.properties.name
+          as_scan_location_cmd?: $cmd-inj-binding.as-scan-location-cmd
+          formactionurl_cmd?: $cmd-inj-binding.formactionurl-cmd
+          isregex_cmd?: $substitutions.isregex-replace($cmd-inj-binding.isregex-cmd)
+          cmdinjection?: $cmd-inj-binding.cmdinjection
+          as_value_type_cmd?: $cmd-inj-binding.as-value-type-cmd
+          as_value_expr_cmd?: $cmd-inj-binding.as-value-expr-cmd
+          state?: $substitutions.enabled-replace($cmd-inj-binding.state)
+          isvalueregex_cmd?: if-then-else(len($cmd-inj-binding.as-value-type-cmd) > 0 and len($cmd-inj-binding.as-value-expr-cmd) > 0, $substitutions.isregex-replace($cmd-inj-binding.isvalueregex-cmd))
+      -
+        name: appfw-profile-denyurl-default-binding-comp-all
+        type: object
+        repeat: $parameters.denyurl-settings.appfwprofile-denyurl-default-binding
+        repeat-item: denyurl-default-binding
+        repeat-condition: $denyurl-default-binding ==  'ALL'
+        properties:
+           prop1 : val1
+        components:
+          -
+            name: appfw-profile-denyurl-default-binding-subcomp-all
+            type: ns::appfwprofile_denyurl_binding
+            repeat: $substitutions.default-deny-urls 
+            repeat-item: denyurl-default-binding-each
+            properties:
+                name: $parent.parent.properties.name
+                denyurl?: $substitutions.default-deny-urls-regex[$denyurl-default-binding-each]
+                state?: "ENABLED"
+      -
+        name: appfw-profile-denyurl-default-binding-comp1
+        type: ns::appfwprofile_denyurl_binding
+        repeat: $parameters.denyurl-settings.appfwprofile-denyurl-default-binding
+        repeat-item: denyurl-default-binding
+        repeat-condition: $denyurl-default-binding !=  'ALL'
+        properties:
+            name: $parent.properties.name
+            denyurl?: $substitutions.default-deny-urls-regex[$denyurl-default-binding]  
+            state?: "ENABLED"
+      - 
+        name: appfw-profile-denyurl-binding-comp
+        type: ns::appfwprofile_denyurl_binding
+        condition: $parameters.denyurl-settings.appfwprofile-denyurl-binding
+        repeat: $parameters.denyurl-settings.appfwprofile-denyurl-binding
+        repeat-item: denyurl-binding
+        properties: 
+          name: $parent.properties.name
+          denyurl?: $denyurl-binding.denyurl
+          state?: $substitutions.enabled-replace($denyurl-binding.state)
+      - 
+        name: appfw-profile-fieldformat-binding-comp
+        type: ns::appfwprofile_fieldformat_binding
+        condition: $parameters.fieldformat-settings.fieldformat-default-settings.appfwprofile-fieldformat-binding
+        repeat: $parameters.fieldformat-settings.fieldformat-default-settings.appfwprofile-fieldformat-binding
+        repeat-item: fformat-binding
+        properties: 
+          name: $parent.properties.name
+          fieldformat?: $fformat-binding.fieldformat
+          fieldformatmaxlength?: $fformat-binding.fieldformatmaxlength
+          fieldformatminlength?: $fformat-binding.fieldformatminlength
+          fieldtype?: $fformat-binding.fieldtype
+          formactionurl_ff?: $fformat-binding.formactionurl-ff
+          isregex_ff?:  $substitutions.isregex-replace($fformat-binding.isregex-ff)
+          state?: $substitutions.enabled-replace($fformat-binding.state)
+      # - 
+      #   name: appfw-profile-fileuploadtype-binding-comp
+      #   type: ns::appfwprofile_fileuploadtype_binding
+      #   condition: $parameters.fileuploadtypes-settings.appfwprofile-fileuploadtype-binding
+      #   repeat: $parameters.fileuploadtypes-settings.appfwprofile-fileuploadtype-binding
+      #   repeat-item: fuploadtype-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     fileuploadtype?: $fuploadtype-binding.fielduploadtype
+      #     as_fileuploadtypes_url?: $fuploadtype-binding.as-fileuploadtypes-url
+      #     filetype?: $fuploadtype-binding.filetype
+      #     state?: $fuploadtype-binding.state
+      # - 
+      #   name: appfw-profile-learningsettings-comp
+      #   type: ns::appfwlearningsettings
+      #   condition: $parameters.learning-settings
+      #   properties:
+      #     profilename: $parent.properties.name
+      #     starturlminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.starturlminthreshold
+      #     starturlpercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.starturlpercentthreshold
+      #     cookieconsistencyminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.cookieconsistencyminthreshold
+      #     cookieconsistencypercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.cookieconsistencypercentthreshold
+      #     csrftagminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.csrftagminthreshold
+      #     csrftagpercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.csrftagpercentthreshold
+      #     fieldconsistencyminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.fieldconsistencyminthreshold
+      #     fieldconsistencypercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.fieldconsistencypercentthreshold
+      #     crosssitescriptingminthreshold?: $parameters.learning-settings.learning-thresholds.crosssitescriptingminthreshold
+      #     crosssitescriptingpercentthreshold?: $parameters.learning-settings.learning-thresholds.crosssitescriptingpercentthreshold
+      #     sqlinjectionminthreshold?: $parameters.learning-settings.learning-thresholds.sqlinjectionminthreshold
+      #     sqlinjectionpercentthreshold?: $parameters.learning-settings.learning-thresholds.sqlinjectionpercentthreshold
+      #     fieldformatminthreshold?: $parameters.learning-settings.learning-thresholds.fieldformatminthreshold
+      #     fieldformatpercentthreshold?: $parameters.learning-settings.learning-thresholds.fieldformatpercentthreshold
+      #     creditcardnumberminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.creditcardnumberminthreshold
+      #     creditcardnumberpercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.creditcardnumberpercentthreshold
+      #     contenttypeminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.contenttypeminthreshold
+      #     contenttypepercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.contenttypepercentthreshold
+      #     xmlwsiminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.xmlwsiminthreshold
+      #     xmlwsipercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.xmlwsipercentthreshold
+      #     xmlattachmentminthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.xmlattachmentminthreshold
+      #     xmlattachmentpercentthreshold?: $parameters.advanced-profile-settings.learning-advanced-settings.xmlattachmentpercentthreshold
+      #     fieldformatautodeploygraceperiod?: $parameters.learning-settings.learning-thresholds.fieldformatautodeploygraceperiod
+      #     sqlinjectionautodeploygraceperiod?: $parameters.learning-settings.learning-thresholds.sqlinjectionautodeploygraceperiod
+      #     crosssitescriptingautodeploygraceperiod?: $parameters.learning-settings.learning-thresholds.crosssitescriptingautodeploygraceperiod
+      #     starturlautodeploygraceperiod?: $parameters.advanced-profile-settings.learning-advanced-settings.starturlautodeploygraceperiod
+      - 
+        name: appfw-profile-trustedclients-binding-comp
+        type: ns::appfwprofile_trustedlearningclients_binding
+        condition: $parameters.learning-settings.trustedclients-settings
+        repeat: $parameters.learning-settings.trustedclients-settings.appfwprofile-trustedlearningclients-binding
+        repeat-item: trustclient-binding
+        properties:
+          name: $parent.properties.name
+          trustedlearningclients?: $trustclient-binding.trustedlearningclients
+          state?: $substitutions.enabled-replace($trustclient-binding.state)
+      # - 
+      #   name: appfw-profile-starturl-binding-comp
+      #   type: ns::appfwprofile_starturl_binding
+      #   condition: $parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.appfwprofile-starturl-binding
+      #   repeat: $parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.appfwprofile-starturl-binding
+      #   repeat-item: starturl-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     starturl?: $starturl-binding.starturl
+      #     state?: $starturl-binding.state
+      # -
+      #   name: appfw-profile-starturl-default-binding1-comp
+      #   type: ns::appfwprofile_starturl_binding
+      #   condition: "$parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.alloweddefaulturls"
+      #   properties: 
+      #     name: $parent.properties.name
+      #     starturl?: str("^[^?]+[.](html?|shtml|js|gif|jpg|jpeg|png|swf|pif|pdf|css|csv)$")
+      #     state?: "ENABLED"
+      # - 
+      #   name: appfw-profile-starturl-default-binding2-comp
+      #   type: ns::appfwprofile_starturl_binding
+      #   condition: "$parameters.advanced-profile-settings.starturl-settings.starturl-default-settings.alloweddefaulturls"
+      #   properties: 
+      #     name: $parent.properties.name
+      #     starturl?: str("^[^?]+[.](cgi|aspx?|jsp|php|pl)([?].*)?$")
+      #     state?: "ENABLED"
+      - 
+        name: appfw-profile-cookieconsistency-binding-comp
+        type: ns::appfwprofile_cookieconsistency_binding
+        condition: $parameters.advanced-profile-settings.cookie-settings.appfwprofile-cookieconsistency-binding
+        repeat: $parameters.advanced-profile-settings.cookie-settings.appfwprofile-cookieconsistency-binding
+        repeat-item: cookie-binding
+        properties: 
+          name: $parent.properties.name
+          cookieconsistency?: $cookie-binding.cookiename
+          isregex?: $substitutions.isregex-replace($cookie-binding.isregex-cookie)
+          state?: $substitutions.enabled-replace($cookie-binding.state)
+      - 
+        name: appfw-profile-fieldconsistency-binding-comp
+        type: ns::appfwprofile_fieldconsistency_binding
+        condition: $parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistency-default-settings.appfwprofile-fieldconsistency-binding
+        repeat: $parameters.advanced-profile-settings.fieldconsistency-settings.fieldconsistency-default-settings.appfwprofile-fieldconsistency-binding
+        repeat-item: field-con-binding
+        properties:
+          name: $parent.properties.name
+          fieldconsistency?: $field-con-binding.fieldconsistency
+          formactionurl_ffc?: $field-con-binding.formactionurl-ffc
+          isregex_ffc?: $substitutions.isregex-replace($field-con-binding.isregex-ffc)
+          state?: $substitutions.enabled-replace($field-con-binding.state)
+      - 
+        name: appfw-profile-contenttype-binding-comp
+        type: ns::appfwprofile_contenttype_binding
+        condition: $parameters.advanced-profile-settings.contenttype-settings.contenttype-default-settings.appfwprofile-contenttype-binding
+        repeat: $parameters.advanced-profile-settings.contenttype-settings.contenttype-default-settings.appfwprofile-contenttype-binding
+        repeat-item: ctype-binding
+        properties: 
+          name: $parent.properties.name
+          contenttype?: $ctype-binding.contenttype
+          state?: $substitutions.enabled-replace($ctype-binding.state)
+      # - 
+      #   name: appfw-profile-creditcard-binding-comp
+      #   type: ns::appfwprofile_creditcardnumber_binding
+      #   condition: $parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.appfwprofile-creditcardnumber-binding
+      #   repeat: $parameters.advanced-profile-settings.creditcard-settings.creditcard-default-settings.appfwprofile-creditcardnumber-binding
+      #   repeat-item: ccard-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     creditcardnumber?: $ccard-binding.creditcardnumber
+      #     creditcardnumberurl?: $ccard-binding.creditcardnumberurl
+      #     state?: $ccard-binding.state
+      - 
+        name: appfw-profile-csrf-binding-comp
+        type: ns::appfwprofile_csrftag_binding
+        condition: $parameters.advanced-profile-settings.csrf-settings.appfwprofile-csrftag-binding
+        repeat: $parameters.advanced-profile-settings.csrf-settings.appfwprofile-csrftag-binding
+        repeat-item: csrf-binding
+        properties: 
+          name: $parent.properties.name
+          #csrftag?: "http://"
+          csrftag?: $csrf-binding.csrftag
+          csrfformactionurl?: $csrf-binding.csrfformactionurl
+          state?: $substitutions.enabled-replace($csrf-binding.state)
+      - 
+        name: appfw-profile-jsonsqlinjection-binding-comp
+        type: ns::appfwprofile_jsonsqlurl_binding
+        condition: $parameters.advanced-profile-settings.json-settings.json-sqlinjection-settings.appfwprofile-jsonsqlinjection-binding
+        repeat: $parameters.advanced-profile-settings.json-settings.json-sqlinjection-settings.appfwprofile-jsonsqlinjection-binding
+        repeat-item: jsonsql-binding
+        properties: 
+          name: $parent.properties.name
+          state?: $substitutions.enabled-replace($jsonsql-binding.state)
+          jsonsqlurl?: $jsonsql-binding.jsonsqlurl
+      - 
+        name: appfw-profile-jsondos-binding-comp
+        type: ns::appfwprofile_jsondosurl_binding
+        condition: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding
+        properties: 
+          name?: $parent.properties.name
+          state?: $substitutions.enabled-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.state)
+          jsondosurl?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsondosurl
+          jsonmaxcontainerdepthcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxcontainerdepthcheck)
+          jsonmaxcontainerdepth?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxcontainerdepth
+          jsonmaxdocumentlengthcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxdocumentlengthcheck)
+          jsonmaxdocumentlength?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxdocumentlength
+          jsonmaxobjectkeycountcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxobjectkeycountcheck)
+          jsonmaxobjectkeycount?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxobjectkeycount
+          jsonmaxobjectkeylengthcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxobjectkeylengthcheck)
+          jsonmaxobjectkeylength?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxobjectkeylength
+          jsonmaxarraylengthcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxarraylengthcheck)
+          jsonmaxarraylength?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxarraylength
+          jsonmaxstringlengthcheck?: $substitutions.onoff-replace($parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxstringlengthcheck)
+          jsonmaxstringlength?: $parameters.advanced-profile-settings.json-settings.json-dos-settings.appfwprofile-jsondos-binding.jsonmaxstringlength
+      - 
+        name: appfw-profile-jsonxss-binding-comp
+        type: ns::appfwprofile_jsonxssurl_binding
+        condition: $parameters.advanced-profile-settings.json-settings.json-xss-settings.appfwprofile-jsonxss-binding
+        repeat: $parameters.advanced-profile-settings.json-settings.json-xss-settings.appfwprofile-jsonxss-binding
+        repeat-item: jsonxss-binding
+        properties: 
+          name: $parent.properties.name
+          state?: $substitutions.enabled-replace($jsonxss-binding.state)
+          jsonxssurl?: $jsonxss-binding.jsonxssurl
+      - 
+        name: appfw-profile-jsoncmdurl-binding-comp
+        type: ns::appfwprofile_jsoncmdurl_binding
+        condition: $parameters.advanced-profile-settings.json-settings.json-cmdinjection-settings.appfwprofile-jsoncmdurl-binding
+        repeat: $parameters.advanced-profile-settings.json-settings.json-cmdinjection-settings.appfwprofile-jsoncmdurl-binding
+        repeat-item: jsoncmdurl-binding
+        properties: 
+          name: $parent.properties.name
+          state?: $substitutions.enabled-replace($jsoncmdurl-binding.state)
+          jsoncmdurl?: $jsoncmdurl-binding.jsoncmdurl
+      - 
+        name: appfw-profile-xmlsqlinjection-binding-comp
+        type: ns::appfwprofile_xmlsqlinjection_binding
+        condition: $parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjection-default-settings.appfwprofile-xmlsqlinjection-binding
+        repeat: $parameters.advanced-profile-settings.xml-settings.xml-sqlinjection-settings.xmlsqlinjection-default-settings.appfwprofile-xmlsqlinjection-binding
+        repeat-item: xmlsql-binding
+        properties: 
+          name: $parent.properties.name
+          as_scan_location_xmlsql?: $xmlsql-binding.as-scan-location-xmlsql
+          isregex_xmlsql?: $substitutions.isregex-replace($xmlsql-binding.isregex-xmlsql)
+          state?: $substitutions.enabled-replace($xmlsql-binding.state)
+          xmlsqlinjection?: $xmlsql-binding.xmlsqlinjectionurl
+      # - 
+      #   name: appfw-profile-xmldos-binding-comp
+      #   type: ns::appfwprofile_xmldosurl_binding
+      #   condition: $parameters.advanced-profile-settings.xml-settings.xml-dos-settings.appfwprofile-xmldos-bindings
+      #   repeat: $parameters.advanced-profile-settings.xml-settings.xml-dos-settings.appfwprofile-xmldos-bindings
+      #   repeat-item: xmldos-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     #state?: $xmldos-binding.state
+      #     #xmldosurl?: $xmldos-binding.xmldosurl
+      #     state?: "ENABLED"
+      #     xmldosurl?: str(".*")
+      #     xmlmaxelementdepthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxelementdepth))
+      #     xmlmaxelementdepth?: $xmldos-binding.xmlmaxelementdepth.value
+      #     xmlmaxelementnamelengthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxelementnamelength))
+      #     xmlmaxelementnamelength?: $xmldos-binding.xmlmaxelementnamelength.value
+      #     xmlmaxelementscheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxelements))
+      #     xmlmaxelements?: $xmldos-binding.xmlmaxelements.value
+      #     xmlmaxelementchildrencheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxelementchildren))
+      #     xmlmaxelementchildren?: $xmldos-binding.xmlmaxelementchildren.value
+      #     # xmlmaxnodescheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxnodes))
+      #     # xmlmaxnodes?: $xmldos-binding.xmlmaxnodes.value
+      #     xmlmaxentityexpansionscheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxentityexpansions))
+      #     xmlmaxentityexpansions?: $xmldos-binding.xmlmaxentityexpansions.value
+      #     xmlmaxentityexpansiondepthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxentityexpansiondepth))
+      #     xmlmaxentityexpansiondepth?: $xmldos-binding.xmlmaxentityexpansiondepth.value
+      #     xmlmaxattributescheck?:  $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxattributes))
+      #     xmlmaxattributes?: $xmldos-binding.xmlmaxattributes.value
+      #     xmlmaxattributenamelengthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxattributenamelength))
+      #     xmlmaxattributenamelength?: $xmldos-binding.xmlmaxattributenamelength.value
+      #     xmlmaxattributevaluelengthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxattributevaluelength))
+      #     xmlmaxattributevaluelength?: $xmldos-binding.xmlmaxattributevaluelength.value
+      #     xmlmaxnamespacescheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxnamespaces))
+      #     xmlmaxnamespaces?: $xmldos-binding.xmlmaxnamespaces.value
+      #     xmlmaxnamespaceurilengthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxnamespaceurilength))
+      #     xmlmaxnamespaceurilength?: $xmldos-binding.xmlmaxnamespaceurilength.value
+      #     xmlmaxchardatalengthcheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxchardatalength))
+      #     xmlmaxchardatalength?: $xmldos-binding.xmlmaxchardatalength.value
+      #     xmlmaxfilesizecheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlmaxfilesize))
+      #     xmlmaxfilesize?: $xmldos-binding.xmlmaxfilesize.value
+      #     xmlminfilesizecheck?: $substitutions.onoff-replace(exists($xmldos-binding.xmlminfilesize))
+      #     xmlminfilesize?: $xmldos-binding.xmlminfilesize.value
+      #     xmlblockpi?: $substitutions.onoff-replace($xmldos-binding.xmlblockpi)
+      #     xmlblockdtd?: $substitutions.onoff-replace($xmldos-binding.xmlblockdtd)
+      #     xmlblockexternalentities?: $substitutions.onoff-replace($xmldos-binding.xmlblockexternalentities)
+      #     xmlsoaparraycheck?: $substitutions.onoff-replace($xmldos-binding.xmlsoaparray)
+      #     xmlmaxsoaparraysize?: $xmldos-binding.xmlsoaparraysize
+      #     xmlmaxsoaparrayrank?: $xmldos-binding.xmlsoaparrayrank
+      # - 
+      #   name: appfw-profile-xmlattachment-binding-comp
+      #   type: ns::appfwprofile_xmlattachmenturl_binding
+      #   condition: $parameters.advanced-profile-settings.xml-settings.xml-attachment-settings.appfwprofile-xmlattachment-bindings
+      #   repeat: $parameters.advanced-profile-settings.xml-settings.xml-attachment-settings.appfwprofile-xmlattachment-bindings
+      #   repeat-item: xmlattachment-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     #state?: $xmlattachment-binding.state
+      #     #xmlattachmenturl?: $xmlattachment-binding.xmlattachmenturl
+      #     state?: "ENABLED"
+      #     xmlattachmenturl?: str(".*")
+      #     xmlmaxattachmentsizecheck?: $substitutions.onoff-replace(exists($xmlattachment-binding.xmlmaxattachmentsize))
+      #     xmlmaxattachmentsize?: $xmlattachment-binding.xmlmaxattachmentsize.value
+      #     xmlattachmentcontenttypecheck?: $substitutions.onoff-replace(exists($xmlattachment-binding.xmlattachmentcontenttype))
+      #     xmlattachmentcontenttype?: $xmlattachment-binding.xmlattachmentcontenttype.value
+      # - 
+      #   name: appfw-profile-xmlvalidation-binding-comp
+      #   type: ns::appfwprofile_xmlvalidationurl_binding
+      #   condition: $parameters.advanced-profile-settings.xml-settings.xml-validation-settings.appfwprofile-xmlvalidation-bindings
+      #   repeat: $parameters.advanced-profile-settings.xml-settings.xml-validation-settings.appfwprofile-xmlvalidation-bindings
+      #   repeat-item: xmlvalidation-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     #state?: $xmlvalidation-binding.state
+      #     state?: "ENABLED"
+      #     xmlvalidatesoapenvelope?: if-then-else(exists($xmlvalidation-binding.xmlvalidatesoapenvelope), $substitutions.onoff-replace(exists($xmlvalidation-binding.xmlvalidatesoapenvelope)))
+      #     xmlwsdl?: $xmlvalidation-binding.xmlvalidatewithwsdl.xmlwsdl
+      #     xmlvalidationurl:  str(".*")
+      #     xmlendpointcheck?: $xmlvalidation-binding.xmlvalidatewithwsdl.xmlendpointcheck
+      #     xmladditionalsoapheaders?: if-then-else(exists($xmlvalidation-binding.xmlvalidatewithwsdl), $substitutions.onoff-replace($xmlvalidation-binding.xmlvalidatewithwsdl.xmladditionalsoapheaders))
+      #     xmlrequestschema?: $xmlvalidation-binding.xmlvalidatewithschema.xmlrequestvalidation.xmlrequestschema
+      #     #xmlresponseschema?: if-then-else($xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlvalidateresponse, if-then-else($xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlreuserequestschema, $xmlvalidation-binding.xmlvalidatewithschema.xmlrequestvalidation.xmlrequestschema, $xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlresponseschema))
+      #     xmlresponseschema?: if-then-else($xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlreuserequestschema,$xmlvalidation-binding.xmlvalidatewithschema.xmlrequestvalidation.xmlrequestschema, $xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlresponseschema)
+      #     xmlvalidateresponse?: $substitutions.onoff-replace($xmlvalidation-binding.xmlvalidatesoapenvelope.xmlvalidateresponse or $xmlvalidation-binding.xmlvalidatewithwsdl.xmlvalidateresponse or $xmlvalidation-binding.xmlvalidatewithschema.xmlresponsevalidation.xmlvalidateresponse)
+      - 
+        name: appfw-profile-xmlwsichecks-default-all-comp
+        type: ns::appfwprofile_xmlwsiurl_binding
+        condition: $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings and $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.all-check
+        properties:
+          name?: $parent.properties.name
+          state: "ENABLED"
+          xmlwsiurl: str(".*")
+          xmlwsichecks?: $substitutions.default-xmlwsichecks
+      - 
+        name: appfw-profile-xmlwsichecks-default-minimum-comp
+        type: ns::appfwprofile_xmlwsiurl_binding
+        condition: $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings and $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.xml-bp1201-wsicheck and not ($parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings)
+        properties:
+          name?: $parent.properties.name
+          state: "ENABLED"
+          xmlwsiurl: str(".*")
+          xmlwsichecks: str("BP1201")
+      - 
+        name: appfw-profile-xmlwsichecks-default-listed-comp
+        type: ns::appfwprofile_xmlwsiurl_binding
+        condition: $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings and $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings and not $parameters.advanced-profile-settings.xml-settings.xml-wsi-settings.appfwprofile-xmlwsi-bindings.all-check
+        properties:
+          name?: $parent.properties.name
+          state: "ENABLED"
+          xmlwsiurl: str(".*")
+          xmlwsichecks:  str("BP1201") + if-then-else($substitutions.selected-checks-string, str(",") + $substitutions.selected-checks-string)
+      - 
+        name: appfw-profile-xmlxss-binding-comp
+        type: ns::appfwprofile_xmlxss_binding
+        condition: $parameters.advanced-profile-settings.xml-settings.xml-xss-settings.appfwprofile-xmlxss-binding
+        repeat: $parameters.advanced-profile-settings.xml-settings.xml-xss-settings.appfwprofile-xmlxss-binding
+        repeat-item: xmlxss-binding
+        properties: 
+          name: $parent.properties.name
+          as_scan_location_xmlxss?: $xmlxss-binding.as-scan-location-xmlxss
+          isregex_xmlxss?: $substitutions.isregex-replace($xmlxss-binding.isregex-xmlxss)
+          state?: $substitutions.enabled-replace($xmlxss-binding.state)
+          xmlxss?: $xmlxss-binding.xmlxssurl
+      # - 
+      #   name: appfw-profile-safeobject-binding-comp
+      #   type: ns::appfwprofile_safeobject_binding
+      #   condition: $parameters.advanced-profile-settings.safeobject-settings.appfwprofile-safeobject-binding
+      #   repeat: $parameters.advanced-profile-settings.safeobject-settings.appfwprofile-safeobject-binding
+      #   repeat-item: s-obj-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     action?: $s-obj-binding.action
+      #     as_expression?: $s-obj-binding.expression
+      #     maxmatchlength?: $s-obj-binding.maxmatchlength
+      #     safeobject?: $s-obj-binding.safeobject
+      #     state?: $s-obj-binding.state
+      # - 
+      #   name: appfw-profile-logexpression-binding-comp
+      #   type: ns::appfwprofile_logexpression_binding
+      #   condition: $parameters.advanced-profile-settings.logexpression-settings.appfwprofile-logexpression-binding
+      #   repeat: $parameters.advanced-profile-settings.logexpression-settings.appfwprofile-logexpression-binding
+      #   repeat-item: logexp-binding
+      #   properties: 
+      #     name: $parent.properties.name
+      #     logexpression?: $logexp-binding.logexpression
+      #     as_logexpression?: $logexp-binding.as-logexpression
+      #     state?: $logexp-binding.state
+outputs: 
+  - 
+    name: appfw-profile
+    description: AppFirewall profile component
+    value: $components.appfw-profile-comp
