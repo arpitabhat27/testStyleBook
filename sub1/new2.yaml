@@ -51,15 +51,7 @@ parameters:
     description: "FQDN Domain Authentication vserver"
     type: string
     required: true
-    
-  
 
-  -
-    name: create-lbvserver
-    label: "Create or Skip lbvserver"
-    description: "If true lbvserver will be created"
-    type: boolean
-    default: true
 
 components:
   -
@@ -72,18 +64,4 @@ components:
       servicetype: $parameters.auth-service-type
       authenticationdomain: $parameters.auth-domain
 
-  -
-    name: lbvserver-comp
-    type: ns::lbvserver
-    condition: $parameters.create-lbvserver
-    properties:
-     name: lbssl
-     servicetype: SSL
-     ipv46: 44.55.33.22
-     port: 443
-     lbmethod: LEASTCONNECTION
-
-outputs:
-  -
-    name: authvserver
-    value: $components.authvserver-comp
+ 
