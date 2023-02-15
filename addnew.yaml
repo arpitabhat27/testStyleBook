@@ -60,6 +60,12 @@ parameters:
     description: "If true lbvserver will be created"
     type: boolean
     default: true
+  -
+    name: create-lbvserver2
+    label: "Create or Skip lbvserver"
+    description: "If true lbvserver will be created"
+    type: boolean
+    default: true
 
 components:
   -
