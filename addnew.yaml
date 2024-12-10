@@ -30,12 +30,7 @@ parameters:
     type: ipaddress
     required: true
 
-  -
-    name: auth-vserver-ip-2
-    label: "Virtual IP address of Authentication vserver"
-    description: "Virtual IP address of Authentication vserver"
-    type: ipaddress
-    required: true
+
 
   -
     name: auth-virtual-port
