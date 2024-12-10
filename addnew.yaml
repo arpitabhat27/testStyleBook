@@ -31,6 +31,13 @@ parameters:
     required: true
 
   -
+    name: auth-vserver-ip-2
+    label: "Virtual IP address of Authentication vserver"
+    description: "Virtual IP address of Authentication vserver"
+    type: ipaddress
+    required: true
+
+  -
     name: auth-virtual-port
     label: "Authentication Vserver Virtual Port"
     description: "TCP port representing the Authentication Vserver"
